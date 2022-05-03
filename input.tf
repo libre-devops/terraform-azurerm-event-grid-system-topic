@@ -1,3 +1,8 @@
+variable "event_grid_name" {
+  type        = string
+  description = "The name of the event grid"
+}
+
 variable "identity_ids" {
   description = "Specifies a list of user managed identity ids to be assigned to the VM."
   type        = list(string)
@@ -24,6 +29,11 @@ variable "rg_name" {
   }
 }
 
+variable "source_arm_resource_id" {
+  type        = string
+  description = "The name of the Resource Group where the Event Grid System Topic should exist, e.g. the resource ID its supposed to check"
+}
+
 variable "tags" {
   type        = map(string)
   description = "A map of the tags to use on the resources that are deployed with this module."
@@ -31,4 +41,9 @@ variable "tags" {
   default = {
     source = "terraform"
   }
+}
+
+variable "topic_type" {
+  type        = string
+  description = "The topic type which the event grid is looking at events for"
 }
