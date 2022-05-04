@@ -13,6 +13,11 @@ output "eventgrid_name" {
   description = "Event Grid name"
 }
 
+output "event_grid_principal_id" {
+  value       = azurerm_eventgrid_system_topic.eventgrid_system_topic.identity[0].principal_id
+  description = "Client ID of system assigned managed identity if created"
+}
+
 output "metric_arm_resource_id" {
   description = "The Event grid metric arm resource id"
   value       = azurerm_eventgrid_system_topic.eventgrid_system_topic.metric_arm_resource_id
