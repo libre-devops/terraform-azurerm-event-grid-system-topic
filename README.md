@@ -105,6 +105,7 @@ No modules.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_event_grid_principal_id"></a> [event\_grid\_principal\_id](#output\_event\_grid\_principal\_id) | Client ID of system assigned managed identity if created |
 | <a name="output_eventgrid_id"></a> [eventgrid\_id](#output\_eventgrid\_id) | Event Grid ID |
 | <a name="output_eventgrid_identity"></a> [eventgrid\_identity](#output\_eventgrid\_identity) | The Event grid identity block |
 | <a name="output_eventgrid_name"></a> [eventgrid\_name](#output\_eventgrid\_name) | Event Grid name |
