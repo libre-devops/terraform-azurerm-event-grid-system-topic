@@ -1,4 +1,14 @@
 ```hcl
+module "rg" {
+  source = "registry.terraform.io/libre-devops/rg/azurerm"
+
+  rg_name  = "rg-${var.short}-${var.loc}-${terraform.workspace}-build" // rg-ldo-euw-dev-build
+  location = local.location                                            // compares var.loc with the var.regions var to match a long-hand name, in this case, "euw", so "westeurope"
+  tags     = local.tags
+
+  #  lock_level = "CanNotDelete" // Do not set this value to skip lock
+}
+
 // This module does not consider for CMKs and allows the users to manually set bypasses
 #checkov:skip=CKV2_AZURE_1:CMKs are not considered in this module
 #checkov:skip=CKV2_AZURE_18:CMKs are not considered in this module
@@ -54,14 +64,14 @@ resource "azurerm_storage_container" "event_grid_blob" {
 }
 
 module "event_grid_system_topic" {
-  source = "registry.terraform.io/libre-devops/event-grid-system-topic/azurerm"
+  source = "registry.terraform.io/libre-devops/eventgrid-system-topic/azurerm"
 
   rg_name  = module.rg.rg_name
   location = module.rg.rg_location
   tags     = module.rg.rg_tags
 
   identity_type = "SystemAssigned"
-  
+
   event_grid_name        = "evgst-${var.short}-${var.loc}-${terraform.workspace}-01"
   topic_type             = "Microsoft.Storage.StorageAccounts"
   source_arm_resource_id = module.sa.sa_id
