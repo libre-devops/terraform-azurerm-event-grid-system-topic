@@ -1,5 +1,5 @@
 resource "azurerm_eventgrid_system_topic" "eventgrid_system_topic" {
-  name                = var.event_grid_name
+  name                = var.name
   resource_group_name = var.rg_name
   location            = var.location
   tags                = var.tags

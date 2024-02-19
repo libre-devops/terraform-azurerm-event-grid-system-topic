@@ -1,83 +1,29 @@
 ```hcl
-module "rg" {
-  source = "registry.terraform.io/libre-devops/rg/azurerm"
+resource "azurerm_eventgrid_system_topic" "eventgrid_system_topic" {
+  name                = var.name
+  resource_group_name = var.rg_name
+  location            = var.location
+  tags                = var.tags
 
-  rg_name  = "rg-${var.short}-${var.loc}-${terraform.workspace}-build" // rg-ldo-euw-dev-build
-  location = local.location                                            // compares var.loc with the var.regions var to match a long-hand name, in this case, "euw", so "westeurope"
-  tags     = local.tags
+  source_arm_resource_id = var.source_arm_resource_id
+  topic_type             = var.topic_type
 
-  #  lock_level = "CanNotDelete" // Do not set this value to skip lock
-}
-
-// This module does not consider for CMKs and allows the users to manually set bypasses
-#checkov:skip=CKV2_AZURE_1:CMKs are not considered in this module
-#checkov:skip=CKV2_AZURE_18:CMKs are not considered in this module
-#checkov:skip=CKV_AZURE_33:Storage logging is not configured by default in this module
-#tfsec:ignore:azure-storage-queue-services-logging-enabled tfsec:ignore:azure-storage-allow-microsoft-service-bypass #tfsec:ignore:azure-storage-default-action-deny
-module "sa" {
-  source = "registry.terraform.io/libre-devops/storage-account/azurerm"
-
-  rg_name  = module.rg.rg_name
-  location = module.rg.rg_location
-  tags     = module.rg.rg_tags
-
-  storage_account_name            = "st${var.short}${var.loc}${terraform.workspace}01"
-  access_tier                     = "Hot"
-  identity_type                   = "SystemAssigned"
-  allow_nested_items_to_be_public = true
-
-  storage_account_properties = {
-
-    // Set this block to enable network rules
-    network_rules = {
-      default_action = "Allow"
+  dynamic "identity" {
+    for_each = length(var.identity_ids) == 0 && var.identity_type == "SystemAssigned" ? [var.identity_type] : []
+    content {
+      type = var.identity_type
     }
+  }
 
-    blob_properties = {
-      versioning_enabled       = false
-      change_feed_enabled      = false
-      default_service_version  = "2020-06-12"
-      last_access_time_enabled = false
-
-      deletion_retention_policies = {
-        days = 10
-      }
-
-      container_delete_retention_policy = {
-        days = 10
-      }
-    }
-
-    routing = {
-      publish_internet_endpoints  = false
-      publish_microsoft_endpoints = true
-      choice                      = "MicrosoftRouting"
+  dynamic "identity" {
+    for_each = length(var.identity_ids) > 0 || var.identity_type == "UserAssigned" ? [var.identity_type] : []
+    content {
+      type         = var.identity_type
+      identity_ids = length(var.identity_ids) > 0 ? var.identity_ids : []
     }
   }
 }
-
-#tfsec:ignore:azure-storage-no-public-access
-resource "azurerm_storage_container" "event_grid_blob" {
-  name                  = "blob${var.short}${var.loc}${terraform.workspace}01"
-  storage_account_name  = module.sa.sa_name
-  container_access_type = "container"
-}
-
-module "event_grid_system_topic" {
-  source = "registry.terraform.io/libre-devops/eventgrid-system-topic/azurerm"
-
-  rg_name  = module.rg.rg_name
-  location = module.rg.rg_location
-  tags     = module.rg.rg_tags
-
-  identity_type = "SystemAssigned"
-
-  event_grid_name        = "evgst-${var.short}-${var.loc}-${terraform.workspace}-01"
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  source_arm_resource_id = module.sa.sa_id
-}
 ```
-
 ## Requirements
 
 No requirements.
@@ -102,13 +48,13 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_event_grid_name"></a> [event\_grid\_name](#input\_event\_grid\_name) | The name of the event grid | `string` | n/a | yes |
 | <a name="input_identity_ids"></a> [identity\_ids](#input\_identity\_ids) | Specifies a list of user managed identity ids to be assigned to the VM. | `list(string)` | `[]` | no |
 | <a name="input_identity_type"></a> [identity\_type](#input\_identity\_type) | The Managed Service Identity Type of this Virtual Machine. | `string` | `""` | no |
 | <a name="input_location"></a> [location](#input\_location) | The location for this resource to be put in | `string` | n/a | yes |
+| <a name="input_name"></a> [name](#input\_name) | The name of the event grid | `string` | n/a | yes |
 | <a name="input_rg_name"></a> [rg\_name](#input\_rg\_name) | The name of the resource group, this module does not create a resource group, it is expecting the value of a resource group already exists | `string` | n/a | yes |
 | <a name="input_source_arm_resource_id"></a> [source\_arm\_resource\_id](#input\_source\_arm\_resource\_id) | The name of the Resource Group where the Event Grid System Topic should exist, e.g. the resource ID its supposed to check | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | A map of the tags to use on the resources that are deployed with this module. | `map(string)` | <pre>{<br>  "source": "terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | A map of the tags to use on the resources that are deployed with this module. | `map(string)` | n/a | yes |
 | <a name="input_topic_type"></a> [topic\_type](#input\_topic\_type) | The topic type which the event grid is looking at events for | `string` | n/a | yes |
 
 ## Outputs
